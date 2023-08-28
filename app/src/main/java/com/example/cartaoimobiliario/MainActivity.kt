@@ -9,8 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +25,8 @@ import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -101,7 +105,7 @@ fun InserirJogadores(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().fillMaxHeight()
     ) {
         for (i in 1..qntJogadores) {
             JogadorForm(index = i, modifier = Modifier.padding(bottom = 8.dp), cor = cores[i - 1])
@@ -118,13 +122,32 @@ fun InserirJogadores(
                 Icon(Icons.Rounded.Add, contentDescription = null)
             }
         }
+
+        ElevatedButton(
+            onClick = { /* Ir para a proxima tela */ },
+            modifier = modifier
+                .width(200.dp)
+                .height(110.dp)
+                .padding(top = 40.dp),
+            elevation = ButtonDefaults.elevatedButtonElevation(2.dp)
+        ) {
+            Text(
+                text = "Começar",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
     }
 }
 
 @Composable
 fun CartaoImobiliarioApp() {
+    var etapa by remember { mutableStateOf(1) }
+
     CartaoImobiliarioTheme {
-        InserirJogadores()
+        when (etapa) {
+            1 -> InserirJogadores()
+            2 -> TelaPrincipal()
+        }
     }
 }
 
