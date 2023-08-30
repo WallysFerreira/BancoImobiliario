@@ -27,6 +27,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -150,6 +151,7 @@ private fun processImageProxy(
 @Composable
 fun TelaCamera(
     modifier: Modifier = Modifier,
+    irParaTelaPassada: () -> Unit,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
     scaleType: PreviewView.ScaleType = PreviewView.ScaleType.FILL_CENTER,
 ) {
@@ -168,42 +170,54 @@ fun TelaCamera(
         }
     )
 
-        AndroidView(
-            modifier = modifier,
-            factory = { context ->
-                val previewView = PreviewView(context).apply {
-                    this.scaleType = scaleType
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+        val previewView = PreviewView(context).apply {
+            this.scaleType = scaleType
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+        }
+
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+
+            val preview = androidx.camera.core.Preview.Builder()
+                .build()
+                .also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+            try {
+                cameraProvider.unbindAll()
 
-                cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner, cameraSelector, preview, analysis
+                )
+            } catch (exc: Exception) {
+                Log.e("QrCode", "Use case binding failed", exc)
+            }
+        }, ContextCompat.getMainExecutor(context))
 
-                    val preview = androidx.camera.core.Preview.Builder()
-                        .build()
-                        .also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-
-                    try {
-                        cameraProvider.unbindAll()
-
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner, cameraSelector, preview, analysis
-                        )
-                    } catch (exc: Exception) {
-                        Log.e("QrCode", "Use case binding failed", exc)
-                    }
-                }, ContextCompat.getMainExecutor(context))
-
-                previewView
-            })
+        previewView
+    })
+        Button(
+            modifier = Modifier.align(Alignment.TopEnd),
+            onClick =  irParaTelaPassada
+        ) {
+            Text("Voltar")
+        }
+    }
 }
 
 @Composable
@@ -295,7 +309,7 @@ fun CartaoImobiliarioApp() {
     CartaoImobiliarioTheme {
         when (etapa) {
             1 -> InserirJogadores(irParaProximaTela = { etapa++ })
-            2 -> TelaCamera()
+            2 -> TelaCamera(irParaTelaPassada = { etapa-- })
         }
     }
 }
